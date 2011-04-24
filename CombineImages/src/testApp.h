@@ -3,6 +3,8 @@
 #include "ofMain.h"
 
 #include "ofxCv.h"
+#define SHARED_RESOURCE_PREFIX string("../../../SharedBin/data/")
+
 using namespace cv;
 using namespace ofxCv;
 
@@ -16,12 +18,12 @@ public:
 	void updatePointCloud();
 	void updateColors();
 	
-	Calibration leftCalibration, rightCalibration;
+	Calibration kinectCalibration, colorCalibration;
 	Mat rotation, translation;
 	ofEasyCam cam;
 	
-	ofImage curLeft, curRight;
-	ofDirectory leftList, rightList;
+	ofImage curKinect, curColor;
+	ofDirectory kinectList, colorList;
 	
 	vector<Point2f> imagePoints;
 	vector<Point3f> pointCloud;

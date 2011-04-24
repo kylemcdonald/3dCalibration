@@ -6,23 +6,28 @@ void testApp::setup() {
 	
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	
-	leftCalibration.load("calibration/left.yml");
-	rightCalibration.load("calibration/right.yml");
+	kinectCalibration.load(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
+	colorCalibration.load(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
 	
-	leftList.listDir("video/left/");
-	leftList.sort();
-	rightList.listDir("video/right/");
-	rightList.sort();
+//	kinectList.listDir("video/left/");
+//	kinectList.sort();
+//	colorList.listDir("video/right/");
+//	colorList.sort();
+
+	kinectList.listDir(SHARED_RESOURCE_PREFIX + "sequence/kinect/");
+	kinectList.sort();
+	colorList.listDir(SHARED_RESOURCE_PREFIX + "sequence/color/");
+	colorList.sort();
 	
-	FileStorage fs(ofToDataPath("calibration/rightToLeft.yml"), FileStorage::READ);
+	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/colorToKinect.yml"), FileStorage::READ);
 	fs["rotation"] >> rotation;
 	fs["translation"] >> translation;
 	
 	cout << "rotation:" << endl << rotation << endl;
 	cout << "translation:" << endl << translation << endl;
 	
-	cout << "left: " << leftCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
-	cout << "right: " << rightCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
+	cout << "kinect: " << kinectCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
+	cout << "color: " << colorCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
 	
 	
 	curImage = 0;
@@ -35,20 +40,19 @@ void testApp::updatePointCloud() {
 	const unsigned int Xres = 640;
 	const unsigned int Yres = 480;
 	
-	Point2d fov = leftCalibration.getUndistortedIntrinsics().getFov();
+	Point2d fov = kinectCalibration.getUndistortedIntrinsics().getFov();
 	float fx = tanf(ofDegToRad(fov.x) / 2) * 2;
 	float fy = tanf(ofDegToRad(fov.y) / 2) * 2;
 	
-	Point2d principalPoint = leftCalibration.getUndistortedIntrinsics().getPrincipalPoint();
-	cv::Size imageSize = leftCalibration.getUndistortedIntrinsics().getImageSize();
+	Point2d principalPoint = kinectCalibration.getUndistortedIntrinsics().getPrincipalPoint();
+	cv::Size imageSize = kinectCalibration.getUndistortedIntrinsics().getImageSize();
 	
 	cout << "principal point is " << principalPoint << endl;
-	
 	cout << "loading point cloud" << endl;
 	
-	int w = curLeft.getWidth();
-	int h = curLeft.getHeight();
-	unsigned char* pixels = curLeft.getPixels();
+	int w = curKinect.getWidth();
+	int h = curKinect.getHeight();
+	unsigned char* pixels = curKinect.getPixels();
 	int i = 0;
 	float depthNear = 40;
 	float depthRange = 90 - depthNear;
@@ -78,42 +82,42 @@ void testApp::updatePointCloud() {
 void testApp::updateColors() {
 	imagePoints.clear();
 	
-	// rotate, translate the points to fit the rightCalibration perspective
-	// and project them onto the rightCalibration image space
+	// rotate, translate the points to fit the colorCalibration perspective
+	// and project them onto the colorCalibration image space
 	// and undistort them
 	projectPoints(Mat(pointCloud),
 								rotation, translation,
-								rightCalibration.getDistortedIntrinsics().getCameraMatrix(),
-								rightCalibration.getDistCoeffs(),
+								colorCalibration.getDistortedIntrinsics().getCameraMatrix(),
+								colorCalibration.getDistCoeffs(),
 								imagePoints);
 	
-	// get the color at each of the projectedPoints inside curRight
+	// get the color at each of the projectedPoints inside curColor
 	// add them into pointCloudColors
 	pointCloudColors.clear();
-	cv::Size curSize = rightCalibration.getUndistortedIntrinsics().getImageSize();
+	cv::Size curSize = colorCalibration.getUndistortedIntrinsics().getImageSize();
 	int w = curSize.width;
 	int h = curSize.height;
 	int n = w * h - 4;
-	unsigned char* pixels = curRight.getPixels();
+	unsigned char* pixels = curColor.getPixels();
 	for(int i = 0; i < imagePoints.size(); i++) {
 		int j = 3 * ((int) imagePoints[i].y * w + (int) imagePoints[i].x);
 		j = ofClamp(j, 0, n);
 		pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f,
-																			 pixels[j + 1] / 255.f,
-																			 pixels[j + 2] / 255.f));
+                                         pixels[j + 1] / 255.f,
+                                         pixels[j + 2] / 255.f));
 	}
 }
 
 void testApp::update() {
 	if(reloadImage) {
-		curLeft.loadImage(leftList.getPath(curImage));
-		curRight.loadImage(rightList.getPath(curImage));
+		curKinect.loadImage(kinectList.getPath(curImage));
+		curColor.loadImage(colorList.getPath(curImage));
 		
-		leftCalibration.undistort(toCv(curLeft));
-		//rightCalibration.undistort(curRight); // projectPoints will undistort for us
+		kinectCalibration.undistort(toCv(curKinect));
+		//colorCalibration.undistort(curColor); // projectPoints will undistort for us
 		
-		curLeft.update();
-		curRight.update();
+		curKinect.update();
+		curColor.update();
 		
 		updatePointCloud();
 		updateColors();
@@ -132,8 +136,8 @@ void testApp::draw() {
 	ofSetColor(255);
 	ofPushMatrix();
 	ofTranslate(0, 0, -10);
-	curLeft.draw(0, -480);
-	curRight.draw(0, 0);
+	curKinect.draw(0, -480);
+	curColor.draw(0, 0);
 	ofPopMatrix();
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -159,6 +163,6 @@ void testApp::keyPressed(int key) {
 		case OF_KEY_UP: curImage++; break;
 		case OF_KEY_DOWN: curImage--; break;
 	}
-	curImage = ofClamp(curImage, 0, leftList.size() - 1);
+	curImage = ofClamp(curImage, 0, kinectList.size() - 1);
 	reloadImage = true;
 }
