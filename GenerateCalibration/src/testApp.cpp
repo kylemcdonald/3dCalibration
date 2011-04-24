@@ -13,8 +13,7 @@ void saveTransformation(Calibration& from, Calibration& to, string filename) {
 	cout << "translation:" << endl << translation << endl;
 }
 
-void testApp::setup()
-{
+void testApp::setup() {
 	kinectCalibration.setBoardSize(10, 7);
 	kinectCalibration.setSquareSize(2.54); // same units as focal length and real world space
 	kinectCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + "calibration/kinect/");

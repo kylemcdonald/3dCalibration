@@ -25,7 +25,7 @@ void testApp::setup() {
 	
 	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + "calibration/kinect/");
 	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + "calibration/color/");
-    
+	
 	kinectCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
 	colorCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
 	
@@ -42,7 +42,7 @@ void testApp::update() {
 }
 
 void testApp::draw() {
-    
+	
 	cam.begin();
 	glEnable(GL_DEPTH_TEST);
 	ofDrawAxis(100);
@@ -50,16 +50,8 @@ void testApp::draw() {
 	if(mouseX < ofGetWidth() / 2) {
 		curCalibration = &kinectCalibration;
 	} else {		
-		if(true || mouseY > ofGetHeight() / 2) {
-			curCalibration = &kinectCalibration;
-			cout << "norm ";
-			applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
-		} else {
-			curCalibration = &colorCalibration;
-			cout << "inv ";
-			Mat rotationInvKinectToColor = rotationKinectToColor.inv();
-			applyMatrix(makeMatrix(rotationInvKinectToColor, -translationKinectToColor));
-		}
+		curCalibration = &colorCalibration;
+		applyMatrix(makeMatrix(rotationKinectToColor, translationKinectToColor));
 	}
 	
 	if(curImage == -1) {
