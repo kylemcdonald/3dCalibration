@@ -5,6 +5,9 @@
 *.app*
 *.DS_*
 
+*.xcworkspace
+xcuserdata/
+
 .svn/
 obj/
 bin/

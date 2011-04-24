@@ -23,17 +23,17 @@ void testApp::setup() {
 	
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	
-	calibrate(leftCalibration, "calibration/left/");
-	calibrate(rightCalibration, "calibration/right/");
+	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + "calibration/kinect/");
+	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + "calibration/color/");
+    
+	kinectCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
+	colorCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
 	
-	leftCalibration.save("calibration/left.yml");
-	rightCalibration.save("calibration/right.yml");
+	kinectCalibration.getTransformation(colorCalibration, rotationColorToKinect, translationColorToKinect);
+	colorCalibration.getTransformation(kinectCalibration, rotationKinectToColor, translationKinectToColor);
 	
-	rightCalibration.getTransformation(leftCalibration, rotationRL, translationRL);
-	leftCalibration.getTransformation(rightCalibration, rotationLR, translationLR);
-	
-	cout << "LR:" << endl << rotationLR << endl << translationLR << endl;
-	cout << "RL:" << endl << rotationRL << endl << translationRL << endl;
+	cout << "Kinect to Color:" << endl << rotationKinectToColor << endl << translationKinectToColor << endl;
+	cout << "Color to Kinect:" << endl << rotationColorToKinect << endl << translationColorToKinect << endl;
 	
 	curImage = -1;
 }
@@ -42,22 +42,23 @@ void testApp::update() {
 }
 
 void testApp::draw() {
+    
 	cam.begin();
 	glEnable(GL_DEPTH_TEST);
 	ofDrawAxis(100);
 	Calibration* curCalibration;
 	if(mouseX < ofGetWidth() / 2) {
-		curCalibration = &leftCalibration;
+		curCalibration = &kinectCalibration;
 	} else {		
 		if(true || mouseY > ofGetHeight() / 2) {
-			curCalibration = &rightCalibration;
+			curCalibration = &kinectCalibration;
 			cout << "norm ";
-			applyMatrix(makeMatrix(rotationRL, translationRL));
+			applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
 		} else {
-			curCalibration = &leftCalibration;
+			curCalibration = &colorCalibration;
 			cout << "inv ";
-			Mat rotationInvLR = rotationLR.inv();
-			applyMatrix(makeMatrix(rotationInvLR, -translationLR));
+			Mat rotationInvKinectToColor = rotationKinectToColor.inv();
+			applyMatrix(makeMatrix(rotationInvKinectToColor, -translationKinectToColor));
 		}
 	}
 	
@@ -76,5 +77,5 @@ void testApp::keyPressed(int key) {
 		case OF_KEY_UP: curImage++; break;
 		case OF_KEY_DOWN: curImage--; break;
 	}
-	curImage = ofClamp(curImage, -1, leftCalibration.size() - 1);
+	curImage = ofClamp(curImage, -1, kinectCalibration.size() - 1);
 }

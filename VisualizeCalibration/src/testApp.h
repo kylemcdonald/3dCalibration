@@ -3,6 +3,8 @@
 #include "ofMain.h"
 
 #include "ofxCv.h"
+#define SHARED_RESOURCE_PREFIX string("../../../SharedBin/data/")
+
 using namespace cv;
 using namespace ofxCv;
 
@@ -13,9 +15,9 @@ public:
 	void draw();
 	void keyPressed(int key);
 	
-	Calibration leftCalibration, rightCalibration;
-	Mat rotationLR, translationLR;
-	Mat rotationRL, translationRL;
+	Calibration kinectCalibration, colorCalibration;
+	Mat rotationKinectToColor, translationKinectToColor;
+	Mat rotationColorToKinect, translationColorToKinect;
 	ofEasyCam cam;
 	
 	int curImage;

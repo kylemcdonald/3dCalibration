@@ -5,6 +5,7 @@ void saveTransformation(Calibration& from, Calibration& to, string filename) {
 	
 	from.getTransformation(to, rotation, translation);
 	FileStorage fs(ofToDataPath(filename), FileStorage::WRITE);
+    
 	fs << "rotation" << rotation;
 	fs << "translation" << translation;
 		
@@ -12,19 +13,20 @@ void saveTransformation(Calibration& from, Calibration& to, string filename) {
 	cout << "translation:" << endl << translation << endl;
 }
 
-void testApp::setup() {
-	leftCalibration.setBoardSize(10, 7);
-	leftCalibration.setSquareSize(2.54); // same units as focal length and real world space
-	leftCalibration.calibrateFromDirectory("left/");
-	leftCalibration.save("left.yml");
+void testApp::setup()
+{
+	kinectCalibration.setBoardSize(10, 7);
+	kinectCalibration.setSquareSize(2.54); // same units as focal length and real world space
+	kinectCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + "calibration/kinect/");
+	kinectCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
 	
-	rightCalibration.setBoardSize(10, 7);
-	rightCalibration.setSquareSize(2.54);
-	rightCalibration.calibrateFromDirectory("right/");
-	rightCalibration.save("right.yml");
+	colorCalibration.setBoardSize(10, 7);
+	colorCalibration.setSquareSize(2.54);
+	colorCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + "calibration/color/");
+	colorCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
 	
-	saveTransformation(leftCalibration, rightCalibration, "leftToRight.yml");
-	saveTransformation(rightCalibration, leftCalibration, "rightToLeft.yml");
+	saveTransformation(kinectCalibration, colorCalibration, SHARED_RESOURCE_PREFIX + "calibration/kinectToColor.yml");
+	saveTransformation(colorCalibration, kinectCalibration, SHARED_RESOURCE_PREFIX + "calibration/colorToKinect.yml");
 }
 
 void testApp::update() {
