@@ -29,8 +29,8 @@ void testApp::setup() {
 	kinectCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
 	colorCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
 	
-	kinectCalibration.getTransformation(colorCalibration, rotationColorToKinect, translationColorToKinect);
-	colorCalibration.getTransformation(kinectCalibration, rotationKinectToColor, translationKinectToColor);
+	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
+	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);
 	
 	cout << "Kinect to Color:" << endl << rotationKinectToColor << endl << translationKinectToColor << endl;
 	cout << "Color to Kinect:" << endl << rotationColorToKinect << endl << translationColorToKinect << endl;
@@ -51,7 +51,8 @@ void testApp::draw() {
 		curCalibration = &kinectCalibration;
 	} else {		
 		curCalibration = &colorCalibration;
-		applyMatrix(makeMatrix(rotationKinectToColor, translationKinectToColor));
+		//applyMatrix(makeMatrix(rotationKinectToColor, translationKinectToColor));
+        applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
 	}
 	
 	if(curImage == -1) {
