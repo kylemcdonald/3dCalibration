@@ -42,8 +42,8 @@ void testApp::setup() {
 	cam.autosavePosition = true;
 	cam.useArrowKeys = false;
 	cam.loadCameraPosition();
-	cam.minimumY = 0;
-	cam.maximumY = 360;
+//	cam.minimumY = 0;
+//	cam.maximumY = 360;
 	#endif
 	
 	curImage = 0;
@@ -162,12 +162,11 @@ void testApp::draw() {
 	ofDrawAxis(100);
 	
 	ofSetColor(255);
-	ofPushMatrix();
-	ofTranslate(0, 0, 0);
-	curKinect.draw(0, -480);
-	curColor.draw(0, 0);
-	ofPopMatrix();
+	curKinect.draw(0, curKinect.getHeight(), curKinect.getWidth(), -curKinect.getHeight());
+	curColor.draw(0, 0, curColor.getWidth(), -curColor.getHeight());	
 	
+	glPushMatrix();
+	glScaled(1, -1, 1);
 	glEnable(GL_DEPTH_TEST);		
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
@@ -177,15 +176,17 @@ void testApp::draw() {
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
-	
 	ofSetColor(255);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(2, GL_FLOAT, sizeof(Point2f), &(imagePoints[0].x));
 	glDrawArrays(GL_POINTS, 0, pointCloud.size());
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
+	glPopMatrix();
+	
 	glDisable(GL_DEPTH_TEST);
 	cam.end();
+		
 }
 
 void testApp::keyPressed(int key) {
