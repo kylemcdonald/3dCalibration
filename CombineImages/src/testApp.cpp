@@ -25,7 +25,7 @@ void testApp::setup() {
 //    cout << "rotation:" << endl << rotationKinectToColor << endl;
 //	cout << "translation:" << endl << translationKinectToColor << endl;
 
-	//FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/colorToKinect.yml"), FileStorage::READ);
+//	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/colorToKinect.yml"), FileStorage::READ);
     FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/kinectToColor.yml"), FileStorage::READ);
 	fs["rotation"] >> rotation;
 	fs["translation"] >> translation;
@@ -36,6 +36,15 @@ void testApp::setup() {
 	cout << "kinect: " << kinectCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
 	cout << "color: " << colorCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
 	
+	
+	#ifdef USE_GAMECAM
+	cam.speed = 10;
+	cam.autosavePosition = true;
+	cam.useArrowKeys = false;
+	cam.loadCameraPosition();
+	cam.minimumY = 0;
+	cam.maximumY = 360;
+	#endif
 	
 	curImage = 0;
 	reloadImage = true;
@@ -53,32 +62,36 @@ void testApp::updatePointCloud() {
 	
 	Point2d principalPoint = kinectCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = kinectCalibration.getUndistortedIntrinsics().getImageSize();
-	
-    cout << "size " << imageSize.width << " " << imageSize.height << endl;
-	cout << "principal point is " << principalPoint << endl;
-	cout << "loading point cloud" << endl;
+//	
+//    cout << "size " << imageSize.width << " " << imageSize.height << endl;
+//	cout << "principal point is " << principalPoint << endl;
+//	cout << "loading point cloud" << endl;
 	
 	int w = curKinect.getWidth();
 	int h = curKinect.getHeight();
 	unsigned char* pixels = curKinect.getPixels();
 	int i = 0;
 	float depthNear = 40;
-	float depthRange = 90 - depthNear;
+	float depthFar = 90;
+//	float depthNear = ofMap(mouseX, 0, 1000, 0, 80);
+//	float depthFar = depthNear + mouseY;
+	float depthRange = depthFar - depthNear;
+
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
 			if(pixels[i] != 0 && pixels[i] != 255) {
 				// from disk, we need to recover the distance
-				//int x = Xres - j - 1; // x axis is flipped from depth image
-                int x = j; // x axis is flipped from depth image
-				float z = ((float) pixels[i] / 255) * depthRange + depthNear;
-				
+				int x = Xres - j - 1; // x axis is flipped from depth image
+                //int x = j; // x axis is flipped from depth image
+				//float z = ((float) pixels[i] / 255) * depthRange + depthNear;
+				float z = ofMap(pixels[i], 255, 0, depthNear, depthFar);
+
 				// is this projective to real world transform correct?
 				// what about the principal point?
 				// then do projective to real world transform
-				float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
-				float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy;
-//				float xReal = ofMap(x - principalPoint.x, -w/2, w/2, -imageSize.width/2, imageSize.width/2);
-//                float yReal = ofMap(y - principalPoint.y, -h/2, h/2, -imageSize.height/2, imageSize.height/2);
+				//x: 5.45 y: -0.43
+				float xReal = (((float) x - principalPoint.x - 5.45) / imageSize.width) * z * fx;
+				float yReal = (((float) y - principalPoint.y + 0.43) / imageSize.height) * z * fy;
                 
 				// add each point into pointCloud
 				pointCloud.push_back(Point3f(xReal, yReal, z));
@@ -87,7 +100,9 @@ void testApp::updatePointCloud() {
 		}
 	}
 	
-	cout << "point cloud size: " << pointCloud.size() << endl;
+	
+	
+	//cout << "point cloud size: " << pointCloud.size() << endl;
 }
 
 void testApp::updateColors() {
@@ -122,6 +137,7 @@ void testApp::updateColors() {
 void testApp::update() {
 	if(reloadImage) {
 		curKinect.loadImage(kinectList.getPath(curImage));
+
 		curColor.loadImage(colorList.getPath(curImage));
 		
 		kinectCalibration.undistort(toCv(curKinect));
@@ -130,27 +146,29 @@ void testApp::update() {
 		curKinect.update();
 		curColor.update();
 		
-		updatePointCloud();
-		updateColors();
-		
 		reloadImage = false;
 	}
+	
+	updatePointCloud();
+	updateColors();
+		
 }
 
 void testApp::draw() {
 	ofBackground(0);
 	
 	cam.begin();
-	glEnable(GL_DEPTH_TEST);
+	
 	ofDrawAxis(100);
 	
 	ofSetColor(255);
 	ofPushMatrix();
-	ofTranslate(0, 0, -10);
+	ofTranslate(0, 0, 0);
 	curKinect.draw(0, -480);
 	curColor.draw(0, 0);
 	ofPopMatrix();
 	
+	glEnable(GL_DEPTH_TEST);		
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloudColors[0].x));
@@ -158,6 +176,7 @@ void testApp::draw() {
 	glDrawArrays(GL_POINTS, 0, pointCloud.size());
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	
 	
 	ofSetColor(255);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -173,6 +192,9 @@ void testApp::keyPressed(int key) {
 	switch(key) {
 		case OF_KEY_UP: curImage++; break;
 		case OF_KEY_DOWN: curImage--; break;
+	}
+	if(key == ' '){
+		cout << "shift is x: " << mouseX/100.0 << " y: " << mouseY/100.0 << endl;
 	}
 	curImage = ofClamp(curImage, 0, kinectList.size() - 1);
 	reloadImage = true;

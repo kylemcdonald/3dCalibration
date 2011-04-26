@@ -8,6 +8,12 @@
 using namespace cv;
 using namespace ofxCv;
 
+#define USE_GAMECAM
+
+#ifdef USE_GAMECAM
+#include "ofxGameCamera.h"
+#endif
+
 class testApp : public ofBaseApp {
 public:
 	void setup();
@@ -23,8 +29,11 @@ public:
 	Mat rotationColorToKinect, translationColorToKinect;
 
 	Mat rotation, translation;
+	#ifdef USE_GAMECAM
+	ofxGameCamera cam;
+	#else
 	ofEasyCam cam;
-	
+	#endif
 	ofImage curKinect, curColor;
 	ofDirectory kinectList, colorList;
 	
