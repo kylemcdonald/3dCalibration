@@ -19,7 +19,14 @@ void testApp::setup() {
 	colorList.listDir(SHARED_RESOURCE_PREFIX + "sequence/color/");
 	colorList.sort();
 	
-	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/colorToKinect.yml"), FileStorage::READ);
+//	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
+//	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);    
+
+//    cout << "rotation:" << endl << rotationKinectToColor << endl;
+//	cout << "translation:" << endl << translationKinectToColor << endl;
+
+	//FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/colorToKinect.yml"), FileStorage::READ);
+    FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/kinectToColor.yml"), FileStorage::READ);
 	fs["rotation"] >> rotation;
 	fs["translation"] >> translation;
 	
@@ -47,6 +54,7 @@ void testApp::updatePointCloud() {
 	Point2d principalPoint = kinectCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = kinectCalibration.getUndistortedIntrinsics().getImageSize();
 	
+    cout << "size " << imageSize.width << " " << imageSize.height << endl;
 	cout << "principal point is " << principalPoint << endl;
 	cout << "loading point cloud" << endl;
 	
@@ -60,7 +68,8 @@ void testApp::updatePointCloud() {
 		for(int j = 0; j < w; j++) {
 			if(pixels[i] != 0 && pixels[i] != 255) {
 				// from disk, we need to recover the distance
-				int x = Xres - j - 1; // x axis is flipped from depth image
+				//int x = Xres - j - 1; // x axis is flipped from depth image
+                int x = j; // x axis is flipped from depth image
 				float z = ((float) pixels[i] / 255) * depthRange + depthNear;
 				
 				// is this projective to real world transform correct?
@@ -68,7 +77,9 @@ void testApp::updatePointCloud() {
 				// then do projective to real world transform
 				float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
 				float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy;
-				
+//				float xReal = ofMap(x - principalPoint.x, -w/2, w/2, -imageSize.width/2, imageSize.width/2);
+//                float yReal = ofMap(y - principalPoint.y, -h/2, h/2, -imageSize.height/2, imageSize.height/2);
+                
 				// add each point into pointCloud
 				pointCloud.push_back(Point3f(xReal, yReal, z));
 			}									
@@ -97,14 +108,14 @@ void testApp::updateColors() {
 	cv::Size curSize = colorCalibration.getUndistortedIntrinsics().getImageSize();
 	int w = curSize.width;
 	int h = curSize.height;
-	int n = w * h - 4;
+	int n = (w * h) * 3;
 	unsigned char* pixels = curColor.getPixels();
 	for(int i = 0; i < imagePoints.size(); i++) {
 		int j = 3 * ((int) imagePoints[i].y * w + (int) imagePoints[i].x);
-		j = ofClamp(j, 0, n);
-		pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f,
-                                         pixels[j + 1] / 255.f,
-                                         pixels[j + 2] / 255.f));
+		j = ofClamp(j, 0, n-1);
+		pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f, 
+                                           pixels[j + 1] / 255.f, 
+                                           pixels[j + 2] / 255.f));
 	}
 }
 

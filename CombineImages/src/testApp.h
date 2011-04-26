@@ -18,7 +18,10 @@ public:
 	void updatePointCloud();
 	void updateColors();
 	
-	Calibration kinectCalibration, colorCalibration;
+	Calibration kinectCalibration, colorCalibration;    
+    Mat rotationKinectToColor, translationKinectToColor;
+	Mat rotationColorToKinect, translationColorToKinect;
+
 	Mat rotation, translation;
 	ofEasyCam cam;
 	
