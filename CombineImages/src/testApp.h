@@ -40,7 +40,9 @@ public:
 	vector<Point2f> imagePoints;
 	vector<Point3f> pointCloud;
 	vector<Point3f> pointCloudColors;
-	
+	float xfudge;
+	float yfudge;
+
 	int curImage;
 	bool reloadImage;
 };

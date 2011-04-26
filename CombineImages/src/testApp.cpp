@@ -76,7 +76,10 @@ void testApp::updatePointCloud() {
 //	float depthNear = ofMap(mouseX, 0, 1000, 0, 80);
 //	float depthFar = depthNear + mouseY;
 	float depthRange = depthFar - depthNear;
-
+//	xfudge = mouseX/50.0;
+//	yfudge = mouseY*2.0;
+	xfudge = -25.72;
+	yfudge = -40;
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
 			if(pixels[i] != 0 && pixels[i] != 255) {
@@ -90,8 +93,8 @@ void testApp::updatePointCloud() {
 				// what about the principal point?
 				// then do projective to real world transform
 				//x: 5.45 y: -0.43
-				float xReal = (((float) x - principalPoint.x - 5.45) / imageSize.width) * z * fx;
-				float yReal = (((float) y - principalPoint.y + 0.43) / imageSize.height) * z * fy;
+				float xReal = (((float) x - principalPoint.x - xfudge) / imageSize.width) * z * fx;
+				float yReal = (((float) y - principalPoint.y - yfudge) / imageSize.height) * z * fy;
                 
 				// add each point into pointCloud
 				pointCloud.push_back(Point3f(xReal, yReal, z));
@@ -195,7 +198,7 @@ void testApp::keyPressed(int key) {
 		case OF_KEY_DOWN: curImage--; break;
 	}
 	if(key == ' '){
-		cout << "shift is x: " << mouseX/100.0 << " y: " << mouseY/100.0 << endl;
+		cout << "shift is x: " << xfudge << " y: " << yfudge << endl;
 	}
 	curImage = ofClamp(curImage, 0, kinectList.size() - 1);
 	reloadImage = true;
