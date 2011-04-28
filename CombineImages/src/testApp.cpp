@@ -78,8 +78,8 @@ void testApp::updatePointCloud() {
 	float depthRange = depthFar - depthNear;
 //	xfudge = mouseX/50.0;
 //	yfudge = mouseY*2.0;
-	xfudge = -25.72;
-	yfudge = -40;
+	xfudge = 0;//-25.72;
+	yfudge = 0;//-40;
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
 			if(pixels[i] != 0 && pixels[i] != 255) {

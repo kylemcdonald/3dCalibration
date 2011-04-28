@@ -8,7 +8,7 @@
 using namespace cv;
 using namespace ofxCv;
 
-#define USE_GAMECAM
+//#define USE_GAMECAM
 
 #ifdef USE_GAMECAM
 #include "ofxGameCamera.h"

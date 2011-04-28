@@ -15,12 +15,12 @@ void saveTransformation(Calibration& from, Calibration& to, string filename) {
 
 void testApp::setup() {
 	kinectCalibration.setBoardSize(10, 7);
-	kinectCalibration.setSquareSize(2.54); // same units as focal length and real world space
+	kinectCalibration.setSquareSize(2.5); // same units as focal length and real world space (cm)
 	kinectCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + "calibration/kinect/");
 	kinectCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
 	
 	colorCalibration.setBoardSize(10, 7);
-	colorCalibration.setSquareSize(2.54);
+	colorCalibration.setSquareSize(2.5);
 	colorCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + "calibration/color/");
 	colorCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
 	
