@@ -34,10 +34,13 @@ void testApp::setup() {
 //	colorList.listDir("video/right/");
 //	colorList.sort();
 
-	kinectList.listDir(SHARED_RESOURCE_PREFIX + SEQUENCE_PREFIX + "kinect/");
+	kinectList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "depth/");
 	kinectList.sort();
-	colorList.listDir(SHARED_RESOURCE_PREFIX + SEQUENCE_PREFIX + "color/");
+	colorList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
 	colorList.sort();
+	irList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
+	colorList.sort();
+	
 	
 //	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
 //	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);    
@@ -46,7 +49,7 @@ void testApp::setup() {
 //	cout << "translation:" << endl << translationKinectToColor << endl;
 
 //	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/colorToKinect.yml"), FileStorage::READ);
-    FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "kinectToColor.yml"), FileStorage::READ);
+    FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinectToColor.yml"), FileStorage::READ);
 	fs["rotation"] >> rotation;
 	fs["translation"] >> translation;
 	
@@ -195,17 +198,17 @@ void testApp::update() {
 
 void testApp::loadCalibrationFromFile()
 {
-	kinectCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "kinect.yml");
-	colorCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "color.yml");
+	kinectCalibration.load(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinect.yml");
+	colorCalibration.load(SHARED_RESOURCE_PREFIX +  DATA_PREFIX + "color.yml");
 }
 
 void testApp::loadCalibrationFromImages()
 {
-	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + "calibration/kinect/");
-	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + "calibration/color/");
+	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
+	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
 	
-	kinectCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
-	colorCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
+	kinectCalibration.save(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinect.yml");
+	colorCalibration.save(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color.yml");
 	
 	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
 	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);
