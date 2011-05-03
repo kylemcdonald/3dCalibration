@@ -3,13 +3,15 @@
 void testApp::setup() {
 	color.initGrabber(640, 480);
 	
-	kinect.init(false, false);
+	kinect.init(true);
 	kinect.open();
 	
-	totalImages = 128;
+	totalImages = 18;
 	curImageColor = 0;
 	curImageKinect = 0;
-	recording = false;
+	recordingKinect = false;
+	recordingColor = false;
+	recordingIr = false;
 	needToSave = true;
 	
 	kinectBuffer.resize(totalImages);
@@ -36,25 +38,48 @@ void testApp::update() {
 	if(kinect.isConnected()) { 
 		kinect.update();
 		if(kinect.isFrameNew()) {
-			if(recording && curImageKinect < totalImages) {
-				kinectTime[curImageKinect] = ofGetSystemTime();
-				unsigned short* pixels = kinect.getRawDepthPixels();
-				float* curBuffer = kinectBuffer[curImageKinect]->getPixels();
-				int n = 640 * 480;
-				for(int i = 0; i < n; i++) {
-					curBuffer[i] = pixels[i];
+			if(curImageKinect < totalImages) {
+				if(recordingKinect) {
+					kinectTime[curImageKinect] = ofGetSystemTime();
+					unsigned short* pixels = kinect.getRawDepthPixels();
+					float* curBuffer = kinectBuffer[curImageKinect]->getPixels();
+					int n = 640 * 480;
+					for(int i = 0; i < n; i++) {
+						curBuffer[i] = pixels[i];
+					}
+					recordingKinect = false;
+					
+					string padded;
+					Poco::NumberFormatter::append0(padded, curImageKinect, 3);
+					kinectBuffer[curImageKinect]->saveRaw("depth/depth-" + padded + ".raw");
 				}
-				curImageKinect++;
+				
+				if(recordingIr) {
+					irBuffer[curImageKinect]->setFromPixels(kinect.getPixels(), 640, 480, OF_IMAGE_GRAYSCALE);
+					
+					string padded;
+					Poco::NumberFormatter::append0(padded, curImageKinect, 3);
+					ofSaveImage(*irBuffer[curImageKinect], "ir/ir-" + padded + ".png");
+					
+					curImageKinect++;
+					recordingIr = false;
+				}
 			}
 		}
 	}
 	
 	color.update();
 	if(color.isFrameNew()) {
-		if(recording && curImageColor < totalImages) {
+		if(recordingColor && curImageColor < totalImages) {
 			colorTime[curImageColor] = ofGetSystemTime();
 			*colorBuffer[curImageColor] = color.getPixelsRef();
+	
+			string padded;
+			Poco::NumberFormatter::append0(padded, curImageColor, 3);
+			ofSaveImage(*colorBuffer[curImageColor], "color/color-" + padded + ".png");
+			
 			curImageColor++;
+			recordingColor = false;
 		}
 	}
 	
@@ -63,11 +88,13 @@ void testApp::update() {
 		time.open("time.csv", ofFile::WriteOnly);
 		for(int i = 0; i < totalImages; i++) {
 			string padded;
+			/*
 			Poco::NumberFormatter::append0(padded, i, 3);
-			kinectBuffer[i]->saveRaw("kinect-" + padded + ".raw");
-			ofSaveImage(*irBuffer[i], "ir-" + padded + ".png");
-			ofSaveImage(*colorBuffer[i], "color-" + padded + ".png");
+			kinectBuffer[i]->saveRaw("depth/depth-" + padded + ".raw");
+			ofSaveImage(*irBuffer[i], "ir/ir-" + padded + ".png");
+			ofSaveImage(*colorBuffer[i], "color/color-" + padded + ".png");
 			time << colorTime[i] << "\t" << kinectTime[i] << endl;
+			*/
 		}
 		time.close();
 		needToSave = false;
@@ -78,6 +105,7 @@ void testApp::draw() {
 	ofBackground(0);
 	
 	kinect.drawDepth(0, 0);
+	kinect.draw(0, 480);
 	color.draw(640, 0);
 }
 
@@ -86,7 +114,11 @@ void testApp::exit() {
 }
 
 void testApp::keyPressed(int key) {
-	if(key == ' ') {
-		recording = !recording;
+	if(key == 'c') {
+		recordingKinect = true;
+		recordingColor = true;
+	}
+	if(key == 'i') {
+		recordingIr = true;
 	}
 }

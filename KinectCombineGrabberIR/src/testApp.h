@@ -29,6 +29,6 @@ public:
 	int curImageColor;
 	int curImageKinect;
 	int totalImages;
-	bool recording;
+	bool recordingKinect, recordingColor, recordingIr;
 	bool needToSave;
 };
