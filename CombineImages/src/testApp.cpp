@@ -1,13 +1,33 @@
 #include "testApp.h"
 
+void calibrate(Calibration& calib, string dir) {
+	
+	ofDirectory dirList;
+	ofImage cur;
+	
+	dirList.listDir(dir);
+	calib.setBoardSize(10, 7);
+	calib.setSquareSize(2.5);
+	for(int i = 0; i < dirList.size(); i++) {
+		cout << "loading " << dirList.getPath(i) << endl;
+		cur.loadImage(dirList.getPath(i));
+		bool found = calib.add(toCv(cur));
+		cout << "pattern found: " << found << endl;
+	}
+	cout << "calibrating for " << calib.size() << " good images out of " << dirList.size() << endl;
+	calib.calibrate();
+}
+
 void testApp::setup() {
 	ofSetVerticalSync(true);
 	ofSetFrameRate(30);
 	
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
+		
+	loadCalibrationFromFile();
 	
-	kinectCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "kinect.yml");
-	colorCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "color.yml");
+//	kinectCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "kinect.yml");
+//	colorCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "color.yml");
 	
 //	kinectList.listDir("video/left/");
 //	kinectList.sort();
@@ -45,6 +65,9 @@ void testApp::setup() {
 //	cam.minimumY = 0;
 //	cam.maximumY = 360;
 	#endif
+	
+	drawCheckboards = false;
+	checkboardsLoaded = false;
 	
 	curImage = 0;
 	reloadImage = true;
@@ -157,6 +180,56 @@ void testApp::update() {
 		
 }
 
+void testApp::loadCalibrationFromFile()
+{
+	kinectCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "kinect.yml");
+	colorCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "color.yml");
+}
+
+void testApp::loadCalibrationFromImages()
+{
+	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + "calibration/kinect/");
+	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + "calibration/color/");
+	
+	kinectCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
+	colorCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
+	
+	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
+	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);
+	
+	cout << "Kinect to Color:" << endl << rotationKinectToColor << endl << translationKinectToColor << endl;
+	cout << "Color to Kinect:" << endl << rotationColorToKinect << endl << translationColorToKinect << endl;
+	
+	curImage = -1;	
+}
+
+void testApp::showCalibrationCheckboards()
+{
+	if(!checkboardsLoaded){
+		loadCalibrationFromImages();
+		checkboardsLoaded = true;
+	}
+	glEnable(GL_DEPTH_TEST);
+	ofDrawAxis(100);
+	Calibration* curCalibration;
+	if(mouseX < ofGetWidth() / 2) {
+		curCalibration = &kinectCalibration;
+	} else {		
+		curCalibration = &colorCalibration;
+		//applyMatrix(makeMatrix(rotationKinectToColor, translationKinectToColor));
+        applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
+	}
+	
+	if(curImage == -1) {
+		curCalibration->draw3d();
+	} else {
+		curCalibration->draw3d(curImage);
+	}
+	
+	glDisable(GL_DEPTH_TEST);
+	
+}
+
 void testApp::draw() {
 	ofBackground(0);
 	
@@ -188,6 +261,11 @@ void testApp::draw() {
 	glPopMatrix();
 	
 	glDisable(GL_DEPTH_TEST);
+	
+	if(drawCheckboards){
+		showCalibrationCheckboards();
+	}
+	
 	cam.end();
 		
 }
@@ -200,6 +278,11 @@ void testApp::keyPressed(int key) {
 	if(key == ' '){
 		cout << "shift is x: " << xfudge << " y: " << yfudge << endl;
 	}
+	
+	if(key == 'c'){
+		drawCheckboards = !drawCheckboards;
+	}
+	
 	curImage = ofClamp(curImage, 0, kinectList.size() - 1);
 	reloadImage = true;
 }

@@ -4,7 +4,7 @@
 *.pbxuser
 *.app*
 *.DS_*
-
+*.perspectivev3
 *.xcworkspace
 xcuserdata/
 

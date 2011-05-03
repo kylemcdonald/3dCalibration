@@ -4,13 +4,13 @@
 
 #include "ofxCv.h"
 #define SHARED_RESOURCE_PREFIX string("../../../SharedBin/data/")
-#define CALIBRATION_PREFIX string("calibration-old/")
-#define SEQUENCE_PREFIX string("video/")
+#define CALIBRATION_PREFIX string("calibration/")
+#define SEQUENCE_PREFIX string("sequence/")
 
 using namespace cv;
 using namespace ofxCv;
 
-//#define USE_GAMECAM
+#define USE_GAMECAM
 
 #ifdef USE_GAMECAM
 #include "ofxGameCamera.h"
@@ -47,4 +47,11 @@ public:
 
 	int curImage;
 	bool reloadImage;
+	
+
+	bool drawCheckboards;
+	bool checkboardsLoaded;
+	void loadCalibrationFromImages();
+	void loadCalibrationFromFile();
+	void showCalibrationCheckboards();
 };
