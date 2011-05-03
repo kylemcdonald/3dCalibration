@@ -4,6 +4,7 @@
 
 #include "ofxCv.h"
 #define SHARED_RESOURCE_PREFIX string("../../../SharedBin/data/")
+#define CALIBRATION_PREFIX string("calibration-old/")
 
 using namespace cv;
 using namespace ofxCv;
