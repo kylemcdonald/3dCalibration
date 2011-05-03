@@ -6,17 +6,17 @@ void testApp::setup() {
 	
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	
-	kinectCalibration.load(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
-	colorCalibration.load(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
+	kinectCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "kinect.yml");
+	colorCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "color.yml");
 	
 //	kinectList.listDir("video/left/");
 //	kinectList.sort();
 //	colorList.listDir("video/right/");
 //	colorList.sort();
 
-	kinectList.listDir(SHARED_RESOURCE_PREFIX + "sequence/kinect/");
+	kinectList.listDir(SHARED_RESOURCE_PREFIX + SEQUENCE_PREFIX + "kinect/");
 	kinectList.sort();
-	colorList.listDir(SHARED_RESOURCE_PREFIX + "sequence/color/");
+	colorList.listDir(SHARED_RESOURCE_PREFIX + SEQUENCE_PREFIX + "color/");
 	colorList.sort();
 	
 //	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
@@ -26,7 +26,7 @@ void testApp::setup() {
 //	cout << "translation:" << endl << translationKinectToColor << endl;
 
 //	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/colorToKinect.yml"), FileStorage::READ);
-    FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/kinectToColor.yml"), FileStorage::READ);
+    FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "kinectToColor.yml"), FileStorage::READ);
 	fs["rotation"] >> rotation;
 	fs["translation"] >> translation;
 	
