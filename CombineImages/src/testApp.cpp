@@ -73,6 +73,18 @@ void testApp::setup() {
 	reloadImage = true;
 }
 
+// these are for converting centimeters to/from raw values
+// using equation from http://openkinect.org/wiki/Imaging_Information
+const float
+k1 = 0.1236,
+k2 = 2842.5,
+k3 = 1.1863,
+k4 = 0.0370;
+
+inline float rawToCentimeters(float raw) {
+	return 100 * (k1 * tan((raw / k2) + k3) - k4);
+}
+
 void testApp::updatePointCloud() {
 	pointCloud.clear();
 	
@@ -92,26 +104,27 @@ void testApp::updatePointCloud() {
 	
 	int w = curKinect.getWidth();
 	int h = curKinect.getHeight();
-	unsigned char* pixels = curKinect.getPixels();
+	float* pixels = curKinect.getPixels();
 	int i = 0;
-	float depthNear = 40;
-	float depthFar = 90;
+//	float depthNear = 40;
+//	float depthFar = 90;
 //	float depthNear = ofMap(mouseX, 0, 1000, 0, 80);
 //	float depthFar = depthNear + mouseY;
-	float depthRange = depthFar - depthNear;
+//	float depthRange = depthFar - depthNear;
 //	xfudge = mouseX/50.0;
 //	yfudge = mouseY*2.0;
 	xfudge = 0;//-25.72;
 	yfudge = 0;//-40;
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
-			if(pixels[i] != 0 && pixels[i] != 255) {
+			if(pixels[i] != 2048) {
 				// from disk, we need to recover the distance
 				int x = Xres - j - 1; // x axis is flipped from depth image
-                //int x = j; // x axis is flipped from depth image
+				//int x = j; // x axis is flipped from depth image
 				//float z = ((float) pixels[i] / 255) * depthRange + depthNear;
-				float z = ofMap(pixels[i], 255, 0, depthNear, depthFar);
-
+				//float z = ofMap(pixels[i], 255, 0, depthNear, depthFar);
+				float z = rawToCentimeters(pixels[i]);
+				
 				// is this projective to real world transform correct?
 				// what about the principal point?
 				// then do projective to real world transform
@@ -162,11 +175,11 @@ void testApp::updateColors() {
 
 void testApp::update() {
 	if(reloadImage) {
-		curKinect.loadImage(kinectList.getPath(curImage));
+		curKinect.loadRaw(kinectList.getPath(curImage), 640, 480);
 
 		curColor.loadImage(colorList.getPath(curImage));
 		
-		kinectCalibration.undistort(toCv(curKinect));
+		//kinectCalibration.undistort(toCv(curKinect)); // removing the undistortion on the depth image because undistort() doesn't work with FloatImage atm
 		//colorCalibration.undistort(curColor); // projectPoints will undistort for us
 		
 		curKinect.update();
