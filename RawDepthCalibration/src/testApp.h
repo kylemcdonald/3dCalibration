@@ -12,12 +12,17 @@ public:
 	void setup();
 	void update();
 	void draw();
-	void exit();
 	
-	void keyPressed(int key);
+	vector<FloatImage*> kinectBuffer;
+	vector<ofImage*> colorBuffer;
 	
-	ofxKinect kinect;
-	bool saveIr, saveDepth;
+	vector<int> kinectTime;
+	vector<int> colorTime;
 	
-	ofImage cur;
+	vector<Point2f> colorCenter;
+	vector<cv::Rect> kinectRoi;
+	vector<float> colorDistance;
+	vector<float> kinectDistance;
+	
+	Calibration calibration;
 };
