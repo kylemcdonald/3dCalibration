@@ -1,44 +1,32 @@
 #include "testApp.h"
 
-void calibrate(Calibration& calib, string dir) {
-	
-	ofDirectory dirList;
-	ofImage cur;
-	
-	dirList.listDir(dir);
-	calib.setBoardSize(10, 7);
-	calib.setSquareSize(2.5);
-	for(int i = 0; i < dirList.size(); i++) {
-		cout << "loading " << dirList.getPath(i) << endl;
-		cur.loadImage(dirList.getPath(i));
-		bool found = calib.add(toCv(cur));
-		cout << "pattern found: " << found << endl;
-	}
-	cout << "calibrating for " << calib.size() << " good images out of " << dirList.size() << endl;
-	calib.calibrate();
-}
-
 void testApp::setup() {	
+	ofSetVerticalSync(true);
+	
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	
-	loadCalibrationFromFile();
-	
 	kinectList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "depth/");
-	kinectList.sort();
 	colorList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
-	colorList.sort();
 	irList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
+	
+	kinectList.sort();
+	colorList.sort();
 	irList.sort();
 	
-	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinectToColor.yml"), FileStorage::READ);
-	fs["rotation"] >> rotation;
-	fs["translation"] >> translation;
+	kinectCalibration.setSquareSize(2.5);
+	kinectCalibration.setBoardSize(10, 7);
 	
-	cout << "rotation:" << endl << rotation << endl;
-	cout << "translation:" << endl << translation << endl;
+	colorCalibration.setSquareSize(2.5);
+	colorCalibration.setBoardSize(10, 7);
 	
-	cout << "kinect: " << kinectCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
-	cout << "color: " << colorCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
+	kinectCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
+	colorCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
+	
+	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
+	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);
+	
+	cout << "Kinect to Color:" << endl << rotationKinectToColor << endl << translationKinectToColor << endl;
+	cout << "Color to Kinect:" << endl << rotationColorToKinect << endl << translationColorToKinect << endl;
 	
 #ifdef USE_GAMECAM
 	cam.speed = 5;
@@ -47,17 +35,11 @@ void testApp::setup() {
 	cam.loadCameraPosition();
 #endif
 	
-	drawChessboards = false;
-	chessboardsLoaded = false;
-	
 	curImage = 0;
 	reloadImage = true;
-	
 	useColor = true;
 }
 
-// these are for converting centimeters to/from raw values
-// using equation from http://openkinect.org/wiki/Imaging_Information
 const float
 k1 = 0.1236,
 k2 = 2842.5,
@@ -86,13 +68,18 @@ void testApp::updatePointCloud() {
 	float* pixels = curKinect.getPixels();
 	int i = 0;
 	
+	/*
+	principalPoint.x += ofMap(mouseX, 0, ofGetWidth(), -4, 4);
+	principalPoint.y += ofMap(mouseY, 0, ofGetHeight(), -4, 4);
+	cout << "fudge: " << ofMap(mouseX, 0, ofGetWidth(), -4, 4) << "x" << ofMap(mouseY, 0, ofGetHeight(), -4, 4) << endl;
+	*/
+	
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
 			if(pixels[i] < 1000) { // the rest is basically noise
 				int x = Xres - j - 1; // x axis is flipped from depth image
 				float z = rawToCentimeters(pixels[i]);
 				
-				float yflipped = Yres - y - 1;
 				float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
 				float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy;
 				
@@ -111,7 +98,7 @@ void testApp::updateColors() {
 	// and project them onto the colorCalibration image space
 	// and undistort them
 	projectPoints(Mat(pointCloud),
-								rotation, translation,
+								rotationKinectToColor, translationKinectToColor,
 								colorCalibration.getDistortedIntrinsics().getCameraMatrix(),
 								colorCalibration.getDistCoeffs(),
 								imagePoints);
@@ -119,76 +106,35 @@ void testApp::updateColors() {
 	// get the color at each of the projectedPoints inside curColor
 	// add them into pointCloudColors
 	pointCloudColors.clear();
-	cv::Size curSize = colorCalibration.getUndistortedIntrinsics().getImageSize();
-	int w = curSize.width;
-	int h = curSize.height;
-	int n = (w * h) * 3;
+	int w = curColor.getWidth();
+	int h = curColor.getHeight();
+	int n = w * h;
 	unsigned char* pixels = curColor.getPixels();
 	for(int i = 0; i < imagePoints.size(); i++) {
-		int j = 3 * ((int) imagePoints[i].y * w + (int) imagePoints[i].x);
-		j = ofClamp(j, 0, n-1);
-		pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f, 
-																			 pixels[j + 1] / 255.f, 
-																			 pixels[j + 2] / 255.f));
+		int j = (int) imagePoints[i].y * w + (int) imagePoints[i].x;
+		if(j < 0 || j >= n) {
+			pointCloudColors.push_back(Point3f(1, 1, 1));
+		} else {
+			j *= 3;
+			pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f, 
+																				 pixels[j + 1] / 255.f, 
+																				 pixels[j + 2] / 255.f));
+		}
 	}
 }
 
 void testApp::update() {
-	if(reloadImage) {
-		curKinect.loadRaw(kinectList.getPath(curImage), 640, 480);
+	if(reloadImage) {		
+		curKinect.loadRaw(kinectList.getPath(curImage), 640, 480);		
+		kinectCalibration.undistort(toCv(curKinect));
+		updatePointCloud();
 		
 		curColor.loadImage(colorList.getPath(curImage));
-		
-		kinectCalibration.undistort(toCv(curKinect));
-		
 		curColor.update();
+		updateColors();
 		
 		reloadImage = false;
-	}
-	
-	updatePointCloud();
-	updateColors();
-	
-}
-
-void testApp::loadCalibrationFromFile() {
-	kinectCalibration.load(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinect.yml");
-	colorCalibration.load(SHARED_RESOURCE_PREFIX +  DATA_PREFIX + "color.yml");
-}
-
-void testApp::loadCalibrationFromImages() {
-	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
-	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
-	
-	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
-	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);
-	
-	cout << "Kinect to Color:" << endl << rotationKinectToColor << endl << translationKinectToColor << endl;
-	cout << "Color to Kinect:" << endl << rotationColorToKinect << endl << translationColorToKinect << endl;
-	
-	curImage = 0;	
-}
-
-void testApp::showCalibrationChessboards() {
-	if(!chessboardsLoaded){
-		loadCalibrationFromImages();
-		chessboardsLoaded = true;
-	}
-	
-	ofDrawAxis(100);
-	Calibration* curCalibration;
-	if(mouseX < ofGetWidth() / 2) {
-		curCalibration = &kinectCalibration;
-	} else {		
-		curCalibration = &colorCalibration;
-		applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
-	}
-	
-	if(curImage == -1) {
-		curCalibration->draw3d();
-	} else {
-		curCalibration->draw3d(curImage);
-	}
+	}	
 }
 
 void testApp::draw() {
@@ -225,10 +171,16 @@ void testApp::draw() {
 	glDrawArrays(GL_POINTS, 0, pointCloud.size());
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
-	if(drawChessboards){
-		showCalibrationChessboards();
+	Calibration* curCalibration;
+	if(mouseX < ofGetWidth() / 2) {
+		curCalibration = &kinectCalibration;
+	} else {		
+		curCalibration = &colorCalibration;
+		applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
 	}
 	
+	curCalibration->draw3d(curImage);
+		
 	glPopMatrix();
 	
 	cam.end();
@@ -241,14 +193,10 @@ void testApp::keyPressed(int key) {
 		case OF_KEY_DOWN: curImage--; break;
 	}
 	
-	if(key == 'q'){
-		drawChessboards = !drawChessboards;
-	}
+	curImage = ofClamp(curImage, 0, kinectList.size() - 1);
+	reloadImage = true;
 	
 	if(key == 'v') {
 		useColor = !useColor;
 	}
-	
-	curImage = ofClamp(curImage, 0, kinectList.size() - 1);
-	reloadImage = true;
 }

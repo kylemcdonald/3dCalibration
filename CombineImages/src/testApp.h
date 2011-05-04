@@ -46,10 +46,4 @@ public:
 	int curImage;
 	bool reloadImage;
 	bool useColor;
-
-	bool drawChessboards;
-	bool chessboardsLoaded;
-	void loadCalibrationFromImages();
-	void loadCalibrationFromFile();
-	void showCalibrationChessboards();
 };
