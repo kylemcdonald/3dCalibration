@@ -45,5 +45,4 @@ public:
 
 	int curImage;
 	bool reloadImage;
-	bool useColor;
 };

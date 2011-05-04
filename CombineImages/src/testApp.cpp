@@ -37,7 +37,6 @@ void testApp::setup() {
 	
 	curImage = 0;
 	reloadImage = true;
-	useColor = true;
 }
 
 const float
@@ -69,10 +68,10 @@ void testApp::updatePointCloud() {
 	int i = 0;
 	
 	/*
-	principalPoint.x += ofMap(mouseX, 0, ofGetWidth(), -4, 4);
-	principalPoint.y += ofMap(mouseY, 0, ofGetHeight(), -4, 4);
-	cout << "fudge: " << ofMap(mouseX, 0, ofGetWidth(), -4, 4) << "x" << ofMap(mouseY, 0, ofGetHeight(), -4, 4) << endl;
-	*/
+	 principalPoint.x += ofMap(mouseX, 0, ofGetWidth(), -4, 4);
+	 principalPoint.y += ofMap(mouseY, 0, ofGetHeight(), -4, 4);
+	 cout << "fudge: " << ofMap(mouseX, 0, ofGetWidth(), -4, 4) << "x" << ofMap(mouseY, 0, ofGetHeight(), -4, 4) << endl;
+	 */
 	
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
@@ -144,7 +143,7 @@ void testApp::draw() {
 	glEnable(GL_DEPTH_TEST);
 	
 	glPushMatrix();
-	glScaled(1, -1, 1);
+	glScaled(1, -1, -1);
 	
 	ofDrawAxis(100);
 	
@@ -152,15 +151,11 @@ void testApp::draw() {
 	curColor.draw(0, 0, curColor.getWidth(), curColor.getHeight());
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
-	if(useColor) {
-		glEnableClientState(GL_COLOR_ARRAY);
-		glColorPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloudColors[0].x));
-	}
+	glEnableClientState(GL_COLOR_ARRAY);
+	glColorPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloudColors[0].x));
 	glVertexPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloud[0].x));
 	glDrawArrays(GL_POINTS, 0, pointCloud.size());
-	if(useColor) {
-		glDisableClientState(GL_COLOR_ARRAY);
-	}
+	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
 	glDisable(GL_DEPTH_TEST);
@@ -180,7 +175,7 @@ void testApp::draw() {
 	}
 	
 	curCalibration->draw3d(curImage);
-		
+	
 	glPopMatrix();
 	
 	cam.end();
@@ -195,8 +190,4 @@ void testApp::keyPressed(int key) {
 	
 	curImage = ofClamp(curImage, 0, kinectList.size() - 1);
 	reloadImage = true;
-	
-	if(key == 'v') {
-		useColor = !useColor;
-	}
 }
