@@ -52,7 +52,7 @@ void testApp::draw() {
 	} else {		
 		curCalibration = &colorCalibration;
 		//applyMatrix(makeMatrix(rotationKinectToColor, translationKinectToColor));
-        applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
+		applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
 	}
 	
 	if(curImage == -1) {

@@ -18,9 +18,7 @@ void calibrate(Calibration& calib, string dir) {
 	calib.calibrate();
 }
 
-void testApp::setup() {
-	ofSetVerticalSync(true);
-	
+void testApp::setup() {	
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	
 	loadCalibrationFromFile();
@@ -90,7 +88,7 @@ void testApp::updatePointCloud() {
 	
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
-			if(pixels[i] != 2048) {
+			if(pixels[i] < 1000) { // the rest is basically noise
 				int x = Xres - j - 1; // x axis is flipped from depth image
 				float z = rawToCentimeters(pixels[i]);
 				
@@ -162,16 +160,13 @@ void testApp::loadCalibrationFromImages() {
 	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
 	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
 	
-	kinectCalibration.save(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinect.yml");
-	colorCalibration.save(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color.yml");
-	
 	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
 	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);
 	
 	cout << "Kinect to Color:" << endl << rotationKinectToColor << endl << translationKinectToColor << endl;
 	cout << "Color to Kinect:" << endl << rotationColorToKinect << endl << translationColorToKinect << endl;
 	
-	curImage = -1;	
+	curImage = 0;	
 }
 
 void testApp::showCalibrationChessboards() {
@@ -234,6 +229,8 @@ void testApp::draw() {
 		showCalibrationChessboards();
 	}
 	
+	glPopMatrix();
+	
 	cam.end();
 	
 }
@@ -244,7 +241,7 @@ void testApp::keyPressed(int key) {
 		case OF_KEY_DOWN: curImage--; break;
 	}
 	
-	if(key == 'c'){
+	if(key == 'q'){
 		drawChessboards = !drawChessboards;
 	}
 	
