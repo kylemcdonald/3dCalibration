@@ -42,16 +42,14 @@ public:
 	vector<Point2f> imagePoints;
 	vector<Point3f> pointCloud;
 	vector<Point3f> pointCloudColors;
-	float xfudge;
-	float yfudge;
 
 	int curImage;
 	bool reloadImage;
-	
+	bool useColor;
 
-	bool drawCheckboards;
-	bool checkboardsLoaded;
+	bool drawChessboards;
+	bool chessboardsLoaded;
 	void loadCalibrationFromImages();
 	void loadCalibrationFromFile();
-	void showCalibrationCheckboards();
+	void showCalibrationChessboards();
 };

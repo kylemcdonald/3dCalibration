@@ -20,36 +20,16 @@ void calibrate(Calibration& calib, string dir) {
 
 void testApp::setup() {
 	ofSetVerticalSync(true);
-	ofSetFrameRate(30);
 	
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
-		
+	
 	loadCalibrationFromFile();
 	
-//	kinectCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "kinect.yml");
-//	colorCalibration.load(SHARED_RESOURCE_PREFIX + CALIBRATION_PREFIX + "color.yml");
-	
-//	kinectList.listDir("video/left/");
-//	kinectList.sort();
-//	colorList.listDir("video/right/");
-//	colorList.sort();
-
 	kinectList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "depth/");
-	kinectList.sort();
 	colorList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
-	colorList.sort();
 	irList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
-	colorList.sort();
 	
-	
-//	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
-//	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);    
-
-//    cout << "rotation:" << endl << rotationKinectToColor << endl;
-//	cout << "translation:" << endl << translationKinectToColor << endl;
-
-//	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX+"calibration/colorToKinect.yml"), FileStorage::READ);
-    FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinectToColor.yml"), FileStorage::READ);
+	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinectToColor.yml"), FileStorage::READ);
 	fs["rotation"] >> rotation;
 	fs["translation"] >> translation;
 	
@@ -59,21 +39,20 @@ void testApp::setup() {
 	cout << "kinect: " << kinectCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
 	cout << "color: " << colorCalibration.getUndistortedIntrinsics().getCameraMatrix() << endl;
 	
-	
-	#ifdef USE_GAMECAM
+#ifdef USE_GAMECAM
 	cam.speed = 5;
 	cam.autosavePosition = true;
 	cam.useArrowKeys = false;
 	cam.loadCameraPosition();
-//	cam.minimumY = 0;
-//	cam.maximumY = 360;
-	#endif
+#endif
 	
-	drawCheckboards = false;
-	checkboardsLoaded = false;
+	drawChessboards = false;
+	chessboardsLoaded = false;
 	
 	curImage = 0;
 	reloadImage = true;
+	
+	useColor = true;
 }
 
 // these are for converting centimeters to/from raw values
@@ -100,52 +79,28 @@ void testApp::updatePointCloud() {
 	
 	Point2d principalPoint = kinectCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = kinectCalibration.getUndistortedIntrinsics().getImageSize();
-//	
-//    cout << "size " << imageSize.width << " " << imageSize.height << endl;
-//	cout << "principal point is " << principalPoint << endl;
-//	cout << "loading point cloud" << endl;
 	
 	int w = curKinect.getWidth();
 	int h = curKinect.getHeight();
 	float* pixels = curKinect.getPixels();
 	int i = 0;
-//	float depthNear = 40;
-//	float depthFar = 90;
-//	float depthNear = ofMap(mouseX, 0, 1000, 0, 80);
-//	float depthFar = depthNear + mouseY;
-//	float depthRange = depthFar - depthNear;
-//	xfudge = mouseX/50.0;
-//	yfudge = mouseY*2.0;
-//	xfudge = 0;//-25.72;
-//	yfudge = 0;//-40;
+	
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
 			if(pixels[i] != 2048) {
-				// from disk, we need to recover the distance
 				int x = Xres - j - 1; // x axis is flipped from depth image
-				//int x = j; // x axis is flipped from depth image
-				//float z = ((float) pixels[i] / 255) * depthRange + depthNear;
-				//float z = ofMap(pixels[i], 255, 0, depthNear, depthFar);
 				float z = rawToCentimeters(pixels[i]);
 				
-				// is this projective to real world transform correct?
-				// what about the principal point?
-				// then do projective to real world transform
-				//x: 5.45 y: -0.43
 				float yflipped = Yres - y - 1;
 				float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
 				float yReal = (((float) yflipped - principalPoint.y) / imageSize.height) * z * fy;
-                
+				
 				// add each point into pointCloud
 				pointCloud.push_back(Point3f(xReal, yReal, z));
 			}									
 			i++;
 		}
 	}
-	
-	
-	
-	//cout << "point cloud size: " << pointCloud.size() << endl;
 }
 
 void testApp::updateColors() {
@@ -172,19 +127,18 @@ void testApp::updateColors() {
 		int j = 3 * ((int) imagePoints[i].y * w + (int) imagePoints[i].x);
 		j = ofClamp(j, 0, n-1);
 		pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f, 
-                                           pixels[j + 1] / 255.f, 
-                                           pixels[j + 2] / 255.f));
+																			 pixels[j + 1] / 255.f, 
+																			 pixels[j + 2] / 255.f));
 	}
 }
 
 void testApp::update() {
 	if(reloadImage) {
 		curKinect.loadRaw(kinectList.getPath(curImage), 640, 480);
-
+		
 		curColor.loadImage(colorList.getPath(curImage));
 		
-		kinectCalibration.undistort(toCv(curKinect)); // removing the undistortion on the depth image because undistort() doesn't work with FloatImage atm
-		//colorCalibration.undistort(curColor); // projectPoints will undistort for us
+		kinectCalibration.undistort(toCv(curKinect));
 		
 		curKinect.update();
 		curColor.update();
@@ -194,17 +148,15 @@ void testApp::update() {
 	
 	updatePointCloud();
 	updateColors();
-		
+	
 }
 
-void testApp::loadCalibrationFromFile()
-{
+void testApp::loadCalibrationFromFile() {
 	kinectCalibration.load(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinect.yml");
 	colorCalibration.load(SHARED_RESOURCE_PREFIX +  DATA_PREFIX + "color.yml");
 }
 
-void testApp::loadCalibrationFromImages()
-{
+void testApp::loadCalibrationFromImages() {
 	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
 	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
 	
@@ -220,21 +172,19 @@ void testApp::loadCalibrationFromImages()
 	curImage = -1;	
 }
 
-void testApp::showCalibrationCheckboards()
-{
-	if(!checkboardsLoaded){
+void testApp::showCalibrationChessboards() {
+	if(!chessboardsLoaded){
 		loadCalibrationFromImages();
-		checkboardsLoaded = true;
+		chessboardsLoaded = true;
 	}
-	glEnable(GL_DEPTH_TEST);
+	
 	ofDrawAxis(100);
 	Calibration* curCalibration;
 	if(mouseX < ofGetWidth() / 2) {
 		curCalibration = &kinectCalibration;
 	} else {		
 		curCalibration = &colorCalibration;
-		//applyMatrix(makeMatrix(rotationKinectToColor, translationKinectToColor));
-        applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
+		applyMatrix(makeMatrix(rotationColorToKinect, translationColorToKinect));
 	}
 	
 	if(curImage == -1) {
@@ -242,15 +192,13 @@ void testApp::showCalibrationCheckboards()
 	} else {
 		curCalibration->draw3d(curImage);
 	}
-	
-	glDisable(GL_DEPTH_TEST);
-	
 }
 
 void testApp::draw() {
 	ofBackground(0);
 	
 	cam.begin();
+	glEnable(GL_DEPTH_TEST);
 	
 	ofDrawAxis(100);
 	
@@ -259,14 +207,17 @@ void testApp::draw() {
 	curColor.draw(0, 0, curColor.getWidth(), -curColor.getHeight());	
 	
 	glPushMatrix();
-	glScaled(1, -1, 1);
-	glEnable(GL_DEPTH_TEST);		
+	glScaled(1, -1, 1);		
 	glEnableClientState(GL_VERTEX_ARRAY);
-	//glEnableClientState(GL_COLOR_ARRAY);
-	//glColorPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloudColors[0].x));
+	if(useColor) {
+		glEnableClientState(GL_COLOR_ARRAY);
+		glColorPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloudColors[0].x));
+	}
 	glVertexPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloud[0].x));
 	glDrawArrays(GL_POINTS, 0, pointCloud.size());
-	//glDisableClientState(GL_COLOR_ARRAY);
+	if(useColor) {
+		glDisableClientState(GL_COLOR_ARRAY);
+	}
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
 	ofSetColor(255);
@@ -277,14 +228,13 @@ void testApp::draw() {
 	
 	glPopMatrix();
 	
-	glDisable(GL_DEPTH_TEST);
-	
-	if(drawCheckboards){
-		showCalibrationCheckboards();
+	if(drawChessboards){
+		showCalibrationChessboards();
 	}
 	
+	glDisable(GL_DEPTH_TEST);
 	cam.end();
-		
+	
 }
 
 void testApp::keyPressed(int key) {
@@ -292,12 +242,13 @@ void testApp::keyPressed(int key) {
 		case OF_KEY_UP: curImage++; break;
 		case OF_KEY_DOWN: curImage--; break;
 	}
-	if(key == ' '){
-		cout << "shift is x: " << xfudge << " y: " << yfudge << endl;
-	}
 	
 	if(key == 'c'){
-		drawCheckboards = !drawCheckboards;
+		drawChessboards = !drawChessboards;
+	}
+	
+	if(key == 'v') {
+		useColor = !useColor;
 	}
 	
 	curImage = ofClamp(curImage, 0, kinectList.size() - 1);
