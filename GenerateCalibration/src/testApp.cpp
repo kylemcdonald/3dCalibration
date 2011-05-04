@@ -23,7 +23,7 @@ void testApp::setup() {
 	
 	colorCalibration.setBoardSize(10, 7);
 	colorCalibration.setSquareSize(2.5);
-	colorCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
+	colorCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
 	colorCalibration.save(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color.yml");
 	
 	saveTransformation(kinectCalibration, colorCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinectToColor.yml");

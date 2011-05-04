@@ -61,7 +61,7 @@ void testApp::setup() {
 	
 	
 	#ifdef USE_GAMECAM
-	cam.speed = 10;
+	cam.speed = 5;
 	cam.autosavePosition = true;
 	cam.useArrowKeys = false;
 	cam.loadCameraPosition();
@@ -116,8 +116,8 @@ void testApp::updatePointCloud() {
 //	float depthRange = depthFar - depthNear;
 //	xfudge = mouseX/50.0;
 //	yfudge = mouseY*2.0;
-	xfudge = 0;//-25.72;
-	yfudge = 0;//-40;
+//	xfudge = 0;//-25.72;
+//	yfudge = 0;//-40;
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
 			if(pixels[i] != 2048) {
@@ -132,8 +132,9 @@ void testApp::updatePointCloud() {
 				// what about the principal point?
 				// then do projective to real world transform
 				//x: 5.45 y: -0.43
-				float xReal = (((float) x - principalPoint.x - xfudge) / imageSize.width) * z * fx;
-				float yReal = (((float) y - principalPoint.y - yfudge) / imageSize.height) * z * fy;
+				float yflipped = Yres - y - 1;
+				float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
+				float yReal = (((float) yflipped - principalPoint.y) / imageSize.height) * z * fy;
                 
 				// add each point into pointCloud
 				pointCloud.push_back(Point3f(xReal, yReal, z));
@@ -182,7 +183,7 @@ void testApp::update() {
 
 		curColor.loadImage(colorList.getPath(curImage));
 		
-		//kinectCalibration.undistort(toCv(curKinect)); // removing the undistortion on the depth image because undistort() doesn't work with FloatImage atm
+		kinectCalibration.undistort(toCv(curKinect)); // removing the undistortion on the depth image because undistort() doesn't work with FloatImage atm
 		//colorCalibration.undistort(curColor); // projectPoints will undistort for us
 		
 		curKinect.update();
@@ -261,11 +262,11 @@ void testApp::draw() {
 	glScaled(1, -1, 1);
 	glEnable(GL_DEPTH_TEST);		
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-	glColorPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloudColors[0].x));
+	//glEnableClientState(GL_COLOR_ARRAY);
+	//glColorPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloudColors[0].x));
 	glVertexPointer(3, GL_FLOAT, sizeof(Point3f), &(pointCloud[0].x));
 	glDrawArrays(GL_POINTS, 0, pointCloud.size());
-	glDisableClientState(GL_COLOR_ARRAY);
+	//glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
 	ofSetColor(255);

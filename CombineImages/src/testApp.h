@@ -4,8 +4,7 @@
 
 #include "ofxCv.h"
 #define SHARED_RESOURCE_PREFIX string("../../../SharedBin/data/")
-#define DATA_PREFIX string("old_sequence/")
-//#define SEQUENCE_PREFIX string("sequence/")
+#define DATA_PREFIX string("triple/")
 
 using namespace cv;
 using namespace ofxCv;
@@ -36,7 +35,8 @@ public:
 	#else
 	ofEasyCam cam;
 	#endif
-	ofImage curKinect, curColor;
+	FloatImage curKinect;
+	ofImage curColor;
 	ofDirectory kinectList, colorList, irList;
 	
 	vector<Point2f> imagePoints;
