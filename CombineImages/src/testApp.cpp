@@ -230,8 +230,6 @@ void testApp::draw() {
 	glDrawArrays(GL_POINTS, 0, pointCloud.size());
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
-	glPopMatrix();
-	
 	if(drawChessboards){
 		showCalibrationChessboards();
 	}

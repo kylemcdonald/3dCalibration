@@ -23,11 +23,11 @@ void testApp::setup() {
 	
 	ofSetDrawBitmapMode(OF_BITMAPMODE_MODEL_BILLBOARD);
 	
-	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + "calibration/kinect/");
-	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + "calibration/color/");
+	calibrate(kinectCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
+	calibrate(colorCalibration, SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
 	
-	kinectCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/kinect.yml");
-	colorCalibration.save(SHARED_RESOURCE_PREFIX + "calibration/color.yml");
+	kinectCalibration.save(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinect.yml");
+	colorCalibration.save(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color.yml");
 	
 	kinectCalibration.getTransformation(colorCalibration, rotationKinectToColor, translationKinectToColor);
 	colorCalibration.getTransformation(kinectCalibration, rotationColorToKinect, translationColorToKinect);
