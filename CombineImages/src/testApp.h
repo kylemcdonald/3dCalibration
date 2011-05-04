@@ -26,7 +26,7 @@ public:
 	void updateColors();
 	
 	Calibration kinectCalibration, colorCalibration;    
-    Mat rotationKinectToColor, translationKinectToColor;
+	Mat rotationKinectToColor, translationKinectToColor;
 	Mat rotationColorToKinect, translationColorToKinect;
 
 	Mat rotation, translation;

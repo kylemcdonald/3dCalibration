@@ -26,8 +26,11 @@ void testApp::setup() {
 	loadCalibrationFromFile();
 	
 	kinectList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "depth/");
+	kinectList.sort();
 	colorList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
+	colorList.sort();
 	irList.listDir(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
+	irList.sort();
 	
 	FileStorage fs(ofToDataPath(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "kinectToColor.yml"), FileStorage::READ);
 	fs["rotation"] >> rotation;
@@ -93,7 +96,7 @@ void testApp::updatePointCloud() {
 				
 				float yflipped = Yres - y - 1;
 				float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
-				float yReal = (((float) yflipped - principalPoint.y) / imageSize.height) * z * fy;
+				float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy;
 				
 				// add each point into pointCloud
 				pointCloud.push_back(Point3f(xReal, yReal, z));
@@ -140,7 +143,6 @@ void testApp::update() {
 		
 		kinectCalibration.undistort(toCv(curKinect));
 		
-		curKinect.update();
 		curColor.update();
 		
 		reloadImage = false;
@@ -195,19 +197,19 @@ void testApp::showCalibrationChessboards() {
 }
 
 void testApp::draw() {
-	ofBackground(0);
+	ofBackground(128);
 	
 	cam.begin();
 	glEnable(GL_DEPTH_TEST);
 	
+	glPushMatrix();
+	glScaled(1, -1, 1);
+	
 	ofDrawAxis(100);
 	
 	ofSetColor(255);
-	curKinect.draw(0, curKinect.getHeight(), curKinect.getWidth(), -curKinect.getHeight());
-	curColor.draw(0, 0, curColor.getWidth(), -curColor.getHeight());	
+	curColor.draw(0, 0, curColor.getWidth(), curColor.getHeight());
 	
-	glPushMatrix();
-	glScaled(1, -1, 1);		
 	glEnableClientState(GL_VERTEX_ARRAY);
 	if(useColor) {
 		glEnableClientState(GL_COLOR_ARRAY);
@@ -219,6 +221,8 @@ void testApp::draw() {
 		glDisableClientState(GL_COLOR_ARRAY);
 	}
 	glDisableClientState(GL_VERTEX_ARRAY);
+	
+	glDisable(GL_DEPTH_TEST);
 	
 	ofSetColor(255);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -232,7 +236,6 @@ void testApp::draw() {
 		showCalibrationChessboards();
 	}
 	
-	glDisable(GL_DEPTH_TEST);
 	cam.end();
 	
 }
