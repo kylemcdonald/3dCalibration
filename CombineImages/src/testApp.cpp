@@ -93,7 +93,7 @@ void testApp::updatePointCloud() {
 				
 				float yflipped = Yres - y - 1;
 				float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
-				float yReal = (((float) yflipped - principalPoint.y) / imageSize.height) * z * fy;
+				float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy;
 				
 				// add each point into pointCloud
 				pointCloud.push_back(Point3f(xReal, yReal, z));
@@ -226,12 +226,11 @@ void testApp::draw() {
 	glDrawArrays(GL_POINTS, 0, pointCloud.size());
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
-	glPopMatrix();
-	
 	if(drawChessboards){
 		showCalibrationChessboards();
 	}
 	
+	glPopMatrix();	
 	glDisable(GL_DEPTH_TEST);
 	cam.end();
 	
