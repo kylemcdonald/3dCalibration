@@ -19,7 +19,7 @@ public:
 	ofxKinect kinect;
 	ofVideoGrabber color;
 	
-	vector<FloatImage*> kinectBuffer;
+	vector<ofFloatImage*> kinectBuffer;
 	vector<ofPixels*> irBuffer;
 	vector<ofPixels*> colorBuffer;
 	

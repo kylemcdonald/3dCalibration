@@ -1,4 +1,5 @@
 #include "testApp.h"
+#include "LoadMat.h"
 
 void testApp::setup() {
 	color.initGrabber(640, 480);
@@ -22,8 +23,8 @@ void testApp::setup() {
 	colorTime.resize(totalImages);
 	
 	for(int i = 0; i < totalImages; i++) {
-		kinectBuffer[i] = new FloatImage();
-		kinectBuffer[i]->allocate(640, 480);
+		kinectBuffer[i] = new Mat();
+		//kinectBuffer[i]->allocate(640, 480);
 		
 		irBuffer[i] = new ofPixels();
 		irBuffer[i]->allocate(640, 480, OF_IMAGE_GRAYSCALE);

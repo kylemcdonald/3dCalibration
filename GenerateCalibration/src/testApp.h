@@ -5,6 +5,7 @@
 #include "ofxCv.h"
 #define SHARED_RESOURCE_PREFIX string("../../../SharedBin/data/")
 #define DATA_PREFIX string("triple/")
+
 using namespace cv;
 using namespace ofxCv;
 

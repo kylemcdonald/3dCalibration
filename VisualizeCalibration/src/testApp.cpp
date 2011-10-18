@@ -6,7 +6,7 @@ void calibrate(Calibration& calib, string dir) {
 	ofImage cur;
 	
 	dirList.listDir(dir);
-	calib.setBoardSize(10, 7);
+	calib.setPatternSize(10, 7);
 	calib.setSquareSize(2.5);
 	for(int i = 0; i < dirList.size(); i++) {
 		cout << "loading " << dirList.getPath(i) << endl;

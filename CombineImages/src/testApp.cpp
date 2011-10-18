@@ -14,10 +14,10 @@ void testApp::setup() {
 	irList.sort();
 	
 	kinectCalibration.setSquareSize(2.5);
-	kinectCalibration.setBoardSize(10, 7);
+	kinectCalibration.setPatternSize(10, 7);
 	
 	colorCalibration.setSquareSize(2.5);
-	colorCalibration.setBoardSize(10, 7);
+	colorCalibration.setPatternSize(10, 7);
 	
 	kinectCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "ir/");
 	colorCalibration.calibrateFromDirectory(SHARED_RESOURCE_PREFIX + DATA_PREFIX + "color/");
@@ -62,9 +62,12 @@ void testApp::updatePointCloud() {
 	Point2d principalPoint = kinectCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = kinectCalibration.getUndistortedIntrinsics().getImageSize();
 	
-	int w = curKinect.getWidth();
-	int h = curKinect.getHeight();
-	float* pixels = curKinect.getPixels();
+	int w = 640;
+	int h = 480;
+//	int w = curKinect.getWidth();
+//	int h = curKinect.getHeight();
+//	float* pixels = curKinect.getPixels();
+	Mat pixels = curKinect;
 	int i = 0;
 	
 	/*
@@ -75,9 +78,10 @@ void testApp::updatePointCloud() {
 	
 	for(int y = 0; y < h; y++) {
 		for(int j = 0; j < w; j++) {
-			if(pixels[i] < 1000) { // the rest is basically noise
+			float pixel = curKinect.at<float>(y, j);
+			if(pixel < 1000) { // the rest is basically noise
 				int x = Xres - j - 1; // x axis is flipped from depth image
-				float z = rawToCentimeters(pixels[i]);
+				float z = rawToCentimeters(pixel);
 				
 				float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
 				float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy;
@@ -115,16 +119,16 @@ void testApp::updateColors() {
 			pointCloudColors.push_back(Point3f(1, 1, 1));
 		} else {
 			j *= 3;
-			pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f, 
-																				 pixels[j + 1] / 255.f, 
-																				 pixels[j + 2] / 255.f));
+			pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f, pixels[j + 1] / 255.f, pixels[j + 2] / 255.f));
 		}
 	}
 }
 
 void testApp::update() {
 	if(reloadImage) {		
-		curKinect.loadRaw(kinectList.getPath(curImage), 640, 480);		
+		curKinect = loadRaw(kinectList.getPath(curImage), 640, 480);
+//		curKinect.loadRaw(kinectList.getPath(curImage), 640, 480);	
+
 		kinectCalibration.undistort(toCv(curKinect));
 		updatePointCloud();
 		

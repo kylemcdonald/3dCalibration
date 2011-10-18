@@ -1,11 +1,12 @@
 #pragma once
 
 #include "ofMain.h"
+#include "LoadMat.h"
 
-#include "ofxCv.h"
 #define SHARED_RESOURCE_PREFIX string("../../../SharedBin/data/")
 #define DATA_PREFIX string("triple/")
 
+#include "ofxCv.h"
 using namespace cv;
 using namespace ofxCv;
 
@@ -14,6 +15,7 @@ using namespace ofxCv;
 #ifdef USE_GAMECAM
 #include "ofxGameCamera.h"
 #endif
+
 
 class testApp : public ofBaseApp {
 public:
@@ -35,7 +37,7 @@ public:
 	#else
 	ofEasyCam cam;
 	#endif
-	FloatImage curKinect;
+	Mat curKinect;
 	ofImage curColor;
 	ofDirectory kinectList, colorList, irList;
 	
